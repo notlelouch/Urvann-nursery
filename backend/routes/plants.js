@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Plant = require('../models/Plant');
+const auth = require('../middleware /auth');
 
 const router = express.Router();
 
@@ -29,7 +30,7 @@ router.get('/', async (req, res) => {
     }
 
     const plants = await Plant.find(query).sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       count: plants.length,
@@ -37,10 +38,10 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching plants:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error fetching plants',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -49,11 +50,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const plant = await Plant.findById(req.params.id);
-    
+
     if (!plant) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Plant not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Plant not found'
       });
     }
 
@@ -63,16 +64,16 @@ router.get('/:id', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching plant:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error fetching plant',
-      error: error.message 
+      error: error.message
     });
   }
 });
 
 // POST /api/plants - Add new plant (Admin feature)
-router.post('/', [
+router.post('/', auth, [
   body('name')
     .notEmpty()
     .trim()
@@ -105,10 +106,10 @@ router.post('/', [
     const { name, price, categories, availability, image, description } = req.body;
 
     // Check if plant with same name already exists
-    const existingPlant = await Plant.findOne({ 
-      name: { $regex: `^${name}$`, $options: 'i' } 
+    const existingPlant = await Plant.findOne({
+      name: { $regex: `^${name}$`, $options: 'i' }
     });
-    
+
     if (existingPlant) {
       return res.status(400).json({
         existingPlant,
@@ -135,10 +136,10 @@ router.post('/', [
     });
   } catch (error) {
     console.error('Error adding plant:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Error adding plant',
-      error: error.message 
+      error: error.message
     });
   }
 });

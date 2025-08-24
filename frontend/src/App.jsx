@@ -4,6 +4,7 @@ import { ErrorMessage } from './components/ErrorMessage';
 import { Header } from './components/Header';
 import { SearchFilter } from './components/SearchFilter';
 import { PlantsGrid } from './components/PlantsGrid';
+import { AuthForm } from './components/AuthForm';
 
 // API service
 const API_BASE = 'http://localhost:3000/api';
@@ -14,28 +15,39 @@ const api = {
     return response.json();
   },
   addPlant: async (plantData) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_BASE}/plants`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(plantData)
     });
     return response.json();
   }
 };
 
-// Categories constant
 const CATEGORIES = ['Indoor', 'Outdoor', 'Succulent', 'Air Purifying', 'Home Decor', 'Flowering', 'Low Maintenance', 'Medicinal'];
 
 // Main App Component
+
 const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
     fetchPlants();
   }, []);
 
@@ -53,10 +65,32 @@ const App = () => {
     }
   };
 
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleIsAdmin = () => {
+    setIsAdmin(true);
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setShowAddForm(false);
+  };
+
+  // Show auth form if not authenticated
+  if (!isAuthenticated) {
+    return <AuthForm
+      onAuthSuccess={handleAuthSuccess}
+      isAdmin={handleIsAdmin}
+    />;
+  }
+
   // Filter plants
   const filteredPlants = plants.filter(plant => {
     const matchesSearch = plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         plant.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()));
+      plant.categories.some(cat => cat.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = !selectedCategory || plant.categories.includes(selectedCategory);
     return matchesSearch && matchesCategory;
   });
@@ -66,25 +100,23 @@ const App = () => {
   const handlePlantAdded = () => fetchPlants();
 
   return (
-    // <div className="w-full bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
     <div className="min-h-screen w-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 overflow-x-hidden">
-
-      <Header 
-        showAddForm={showAddForm} 
-        onToggleForm={handleToggleForm} 
+      <Header
+        showAddForm={showAddForm}
+        onToggleForm={handleToggleForm}
+        onLogout={handleLogout}
+        isAdmin={isAdmin}
       />
-      
-      {/* <main className="w-full px-4 sm:px-6 lg:px-8 py-8 max-w-none"> */}
+
       <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-[2000px] mx-auto">
-
           <ErrorMessage error={error} />
 
           {showAddForm && (
-            <AddPlantForm 
+            <AddPlantForm
               onClose={handleCloseForm}
               onPlantAdded={handlePlantAdded}
-              categories = {CATEGORIES}
+              categories={CATEGORIES}
               api={api}
             />
           )}
@@ -99,7 +131,7 @@ const App = () => {
             categories={CATEGORIES}
           />
 
-          <PlantsGrid 
+          <PlantsGrid
             plants={filteredPlants}
             loading={loading}
           />

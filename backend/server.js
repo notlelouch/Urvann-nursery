@@ -12,6 +12,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/plants', require('./routes/plants'));
+app.use('/api/login', require('./routes/login'));
+app.use('/api/signup', require('./routes/signup'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -34,17 +36,17 @@ mongoose.connect(process.env.MONGODB_URI)
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
-    message: 'Something went wrong!', 
-    error: process.env.NODE_ENV === 'production' ? {} : err.message 
+  res.status(500).json({
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'production' ? {} : err.message
   });
 });
 
 // Handle 404
-app.use((req,res) => {
-    res.status(404).json({
-        success: false,
-        message: "Route not found",
-        path: req.originalUrl
-    });
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.originalUrl
+  });
 })
