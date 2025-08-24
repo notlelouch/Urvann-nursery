@@ -7,7 +7,8 @@ import { PlantsGrid } from './components/PlantsGrid';
 import { AuthForm } from './components/AuthForm';
 
 // API service
-const API_BASE = 'http://localhost:3000/api';
+// const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'https://urvann-nursery.onrender.com/api';
 
 const api = {
   getPlants: async () => {
